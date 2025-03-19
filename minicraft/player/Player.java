@@ -9,7 +9,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import minicraft.graphics.SpriteSheet;
-//asda
 
 public class Player {
     private int x, y, speed = 7, frame;
@@ -19,13 +18,15 @@ public class Player {
     private HashMap<String, BufferedImage[]> animations;
     private Timer idleTimer;
 
-    public Player(int x, int y, SpriteSheet spriteSheet) {
+    public Player(int x, int y) {
         this.x = x;
         this.y = y;
-        this.spriteSheet = spriteSheet;
+        
+        this.spriteSheet = new SpriteSheet("minicraft/graphics/sprites/steve_sprites1.png", 18, 18);
+        
         this.animations = new HashMap<>();
-
-        loadAnimations();
+        
+        loadAnimations(); // Agora podemos chamar loadAnimations corretamente
         startIdleAnimation();
     }
 
@@ -41,17 +42,6 @@ public class Player {
             spriteSheet.getSprite(36, 18),
             spriteSheet.getSprite(54, 18),
         });
-        /*
-        animação de soco
-        * animations.put("SOCANDO", new BufferedImage[]{
-                    spriteSheet.getSprite(0, 36),
-                    spriteSheet.getSprite(18, 36),
-                    spriteSheet.getSprite(36, 36),
-                    spriteSheet.getSprite(54, 36),
-                    spriteSheet.getSprite(72, 36),
-                    spriteSheet.getSprite(90, 36),
-                });
-        */
     }
 
     private void startIdleAnimation() {
@@ -98,12 +88,10 @@ public class Player {
             frame = (frame + 1) % animations.get(state).length;
         }
     
-        // Adicionando uma segurança extra para evitar acessar um índice inválido
         if (frame >= animations.get(state).length) {
             frame = 0;
         }
     }
-    
 
     public void render(Graphics g, int cameraX, int cameraY) {
         BufferedImage sprite = animations.get(state)[frame];
@@ -114,7 +102,6 @@ public class Player {
     
         g.drawImage(sprite, x - cameraX, y - cameraY, 48, 48, null);
     }
-    
 
     private BufferedImage flipImage(BufferedImage image) {
         int w = image.getWidth();
@@ -136,9 +123,8 @@ public class Player {
     public int getX() {
         return x;
     }
-    
+
     public int getY() {
         return y;
     }
-    
 }

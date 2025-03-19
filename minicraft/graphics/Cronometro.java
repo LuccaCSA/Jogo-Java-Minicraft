@@ -15,8 +15,8 @@ public class Cronometro {
     private long startTime; // Tempo inicial do cronômetro
     private final long dayDuration = 160000; // Duração de um ciclo completo do dia em milissegundos 
 
-    public Cronometro(String caminhoSprites) {
-        spriterelogio = new SpriteSheet(caminhoSprites, 18, 18);  // Carregar o sprite do relógio
+    public Cronometro() {
+        spriterelogio = new SpriteSheet("minicraft/graphics/sprites/horario.png", 18, 18);  // Carregar o sprite do relógio
         animations = new HashMap<>();
         loadAnimations();
         startIdleAnimation();

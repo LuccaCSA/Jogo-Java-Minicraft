@@ -9,16 +9,16 @@ import javax.imageio.ImageIO;
 public class Mapa {
     private BufferedImage mapaImage;
 
-    public Mapa(String caminho) {
+    public Mapa() {
         try {
-            mapaImage = ImageIO.read(new File(caminho));
+            mapaImage = ImageIO.read(new File("minicraft/graphics/sprites/mapa.png"));
             if (mapaImage == null) {
                 System.out.println("Erro: a imagem do mapa não foi carregada!");
             } else {
                 System.out.println("Mapa carregado! Dimensões: " + mapaImage.getWidth() + "x" + mapaImage.getHeight());
             }
         } catch (IOException e) {
-            System.out.println("Erro ao carregar a imagem do mapa: " + caminho);
+            System.out.println("Erro ao carregar a imagem do mapa: ");
             e.printStackTrace();
         }
     }
