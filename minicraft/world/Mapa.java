@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
+import java.awt.Color;
+
 
 public class Mapa {
     private BufferedImage mapaImage;
@@ -23,11 +25,23 @@ public class Mapa {
         }
     }
 
-    public void render(Graphics g, int cameraX, int cameraY) {
+    public int getLargura() {
+        return (mapaImage != null) ? mapaImage.getWidth() : 0;
+    }
+
+    public int getAltura() {
+        return (mapaImage != null) ? mapaImage.getHeight() : 0;
+    }
+
+    public void render(Graphics g, int cameraX, int cameraY, Color skyColor) {
         if (mapaImage != null) {
             g.drawImage(mapaImage, -cameraX, -cameraY, null);
-        } else {
-            System.out.println("Erro: mapaImage é null na renderização!");
+            applyDayNightEffect(g, skyColor); // Aplica o efeito de iluminação
         }
+    }
+
+    private void applyDayNightEffect(Graphics g, Color skyColor) {
+        g.setColor(skyColor); 
+        g.fillRect(0, 0, mapaImage.getWidth(), mapaImage.getHeight());
     }
 }

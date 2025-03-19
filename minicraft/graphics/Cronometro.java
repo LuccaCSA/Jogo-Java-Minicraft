@@ -3,27 +3,32 @@ package minicraft.graphics;
 import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 
 public class Cronometro {
-    
     private Timer idleTimer;
     private SpriteSheet spriterelogio;
     private HashMap<String, BufferedImage[]> animations;
     private int frame = 0;
-    private String state = "horario";  // Defina o estado da animação
-    private long startTime; // Tempo inicial do cronômetro
-    private final long dayDuration = 160000; // Duração de um ciclo completo do dia em milissegundos 
+    private String state = "horario";
+    private long startTime;
+    private final long dayDuration = 160000; // 160 segundos (2 minutos e 40 segundos)
+    private int x, y;
+    private long lastFrameTime = System.currentTimeMillis(); // Tempo da última troca de frame
 
     public Cronometro() {
-        spriterelogio = new SpriteSheet("minicraft/graphics/sprites/horario.png", 18, 18);  // Carregar o sprite do relógio
+        this.x = 30; // Posição X fixa
+        this.y = 30; // Posição Y fixa
+        spriterelogio = new SpriteSheet("minicraft/graphics/sprites/horario.png", 18, 18);
         animations = new HashMap<>();
+        startTime = System.currentTimeMillis(); // Inicia o tempo
         loadAnimations();
         startIdleAnimation();
     }
 
     private void loadAnimations() {
-        // Aqui, o relógio terá duas imagens para animação, alterando a cada 30 segundos
         animations.put("horario", new BufferedImage[]{
             spriterelogio.getSprite(0, 0),
             spriterelogio.getSprite(18, 0),
@@ -65,18 +70,71 @@ public class Cronometro {
         idleTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                // Muda o frame de animação a cada 30 segundos (30000 milissegundos)
                 frame = (frame + 1) % animations.get(state).length;
             }
-        }, 0, 5000); // 0 delay inicial, repete a cada 5 segundos
+        }, 0, 5000); // Muda o frame a cada 5 segundos
     }
 
     public BufferedImage getCurrentFrame() {
         return animations.get(state)[frame];
     }
 
-    public float getDayPhase() {
-        long elapsedTime = System.currentTimeMillis() - startTime;
-        return (float) (elapsedTime % dayDuration) / dayDuration; // Retorna um valor entre 0 e 1
+    public void update() {
+        // Atualiza a animação (se necessário)
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastFrameTime >= 5000) { // 5000ms = 5 segundos
+            frame = (frame + 1) % animations.get(state).length;
+            lastFrameTime = currentTime;
+        }
     }
+
+    public void render(Graphics g) {
+        BufferedImage currentFrame = getCurrentFrame();
+        if (currentFrame != null) {
+            // Desenha o cronômetro em uma posição fixa e aumenta o tamanho em 6 vezes
+            g.drawImage(currentFrame, x, y, 48 * 3, 48 * 3, null);
+        }
+    }
+
+
+    public float getDayPhase(long gameTime) {
+        return (float) (gameTime % dayDuration) / dayDuration;
+    }
+
+    public String spawnMonstro;
+
+    public Color getSkyColor(long gameTime) {
+        float phase = getDayPhase(gameTime);
+        float r, g, b, alpha;
+
+
+        if (phase < 0.25f) { // Amanhecer (Escuro -> Claro)
+            alpha = 0.7f * (1.0f - (phase / 0.25f));
+            r = 0.0f;
+            g = 0.0f;
+            b = 0.2f;
+        } 
+        else if (phase < 0.5f) { // Meio-dia (Claro -> Sem efeito)
+            alpha = 1.0f - ((phase - 0.25f) / 0.25f);
+            r = 1.0f;
+            g = 1.0f;
+            b = 1.0f;
+        }
+        else if (phase < 0.75f) { // Entardecer (Sem efeito -> Laranja)
+            alpha = 0.6f * ((phase - 0.5f) / 0.25f);
+            r = 1.0f;
+            g = 0.5f;
+            b = 0.3f;
+        }
+        else { // Noite (Laranja -> Escuro)
+            alpha = 0.8f * ((phase - 0.75f) / 0.25f);
+            r = 0.2f;
+            g = 0.1f;
+            b = 0.4f;
+            spawnMonstro = "sim";
+        }
+
+        return new Color(r, g, b, alpha); 
+    }
+
 }

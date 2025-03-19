@@ -13,7 +13,7 @@ public  class Camera {
     public void update(Player player, int mapWidth, int mapHeight, int screenWidth, int screenHeight) {
         // Centraliza a câmera no jogador
         x = player.getX() - screenWidth / 2;
-        y = player.getY() - screenHeight / 2;
+        y = player.getY() - screenHeight /2;
 
         // Impede que a câmera mostre áreas fora do mapa
         if (x < 0) x = 0;

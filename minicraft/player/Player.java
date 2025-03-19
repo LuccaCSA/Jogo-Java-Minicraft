@@ -11,23 +11,26 @@ import java.util.TimerTask;
 import minicraft.graphics.SpriteSheet;
 
 public class Player {
-    private int x, y, speed = 7, frame;
+    private int x, y, speed = 4, frame;
     private boolean up, down, left, right, facingRight = true;
     private String state = "PARADO";
     private SpriteSheet spriteSheet;
     private HashMap<String, BufferedImage[]> animations;
     private Timer idleTimer;
 
+    // Controle da animação de movimento
+    private int animationSpeed = 5; // Ajuste este valor para mudar a velocidade (quanto maior, mais lento)
+    private int animationCounter = 0;
+
     public Player(int x, int y) {
         this.x = x;
         this.y = y;
         
         this.spriteSheet = new SpriteSheet("minicraft/graphics/sprites/steve_sprites1.png", 18, 18);
-        
         this.animations = new HashMap<>();
         
-        loadAnimations(); // Agora podemos chamar loadAnimations corretamente
-        startIdleAnimation();
+        loadAnimations();
+        startIdleAnimation(); // Inicia o Timer para a animação idle
     }
 
     private void loadAnimations() {
@@ -50,10 +53,13 @@ public class Player {
             @Override
             public void run() {
                 if (state.equals("PARADO")) {
-                    frame = (frame + 1) % animations.get("PARADO").length;
+                    javax.swing.SwingUtilities.invokeLater(() -> {
+                        // Avança o frame e reinicia ao chegar no final
+                        frame = (frame + 1) % animations.get("PARADO").length;
+                    });
                 }
             }
-        }, 800, 800); // Alterna a cada 1 segundo
+        }, 500, 500); // Intervalo de 500ms (0.5 segundos)
     }
 
     public void update() {
@@ -84,24 +90,34 @@ public class Player {
     
         if (!moving) {
             state = "PARADO";
-        } else {
-            frame = (frame + 1) % animations.get(state).length;
         }
     
-        if (frame >= animations.get(state).length) {
-            frame = 0;
+        // Atualiza animação de movimento
+        if (state.equals("ANDANDO")) {
+            animationCounter++;
+            if (animationCounter >= animationSpeed) {
+                frame = (frame + 1) % animations.get("ANDANDO").length;
+                animationCounter = 0;
+            }
         }
     }
 
     public void render(Graphics g, int cameraX, int cameraY) {
-        BufferedImage sprite = animations.get(state)[frame];
+        // Garante que o frame não ultrapasse o tamanho do array
+        int maxFrame = animations.get(state).length - 1;
+        if (frame > maxFrame) {
+            frame = maxFrame;
+        }
     
+        BufferedImage sprite = animations.get(state)[frame];
+        
         if (!facingRight) {
             sprite = flipImage(sprite);
         }
-    
+        
         g.drawImage(sprite, x - cameraX, y - cameraY, 48, 48, null);
     }
+
 
     private BufferedImage flipImage(BufferedImage image) {
         int w = image.getWidth();
