@@ -3,6 +3,8 @@ package minicraft.main;
 import javax.swing.*;
 import minicraft.graphics.Camera;
 import minicraft.graphics.Cronometro;
+import minicraft.inimigos.Creeper;
+import minicraft.inimigos.Slime;
 import minicraft.player.Player;
 import minicraft.world.Mapa;
 
@@ -18,6 +20,8 @@ public class Jogo extends JFrame implements KeyListener {
     private Player player;
     private Camera camera;
     private Cronometro cronometro;
+    private Creeper creeper;
+    private Slime slimeteste;
 
     public Jogo() {
         // Configurações da janela
@@ -46,6 +50,8 @@ public class Jogo extends JFrame implements KeyListener {
         mapa = new Mapa();
         camera = new Camera(600, 500); // Inicializa a câmera
         cronometro = new Cronometro();
+        creeper = new Creeper(300, 300);
+        slimeteste = new Slime(300, 300);
 
         startGame();
     }
@@ -79,6 +85,16 @@ public class Jogo extends JFrame implements KeyListener {
     private void updateGame(long gameTime) { 
         player.update();
         camera.update(player, mapa.getLargura(), mapa.getAltura(), canvas.getWidth(), canvas.getHeight());
+
+        // Atualiza o Creeper
+        if (creeper.estaVivo()) { // 
+            creeper.update(player);
+        }
+
+        if (slimeteste.estaVivo()) {
+            slimeteste.update(player);
+        }
+
     }
 
     // Método para renderizar o jogo
@@ -104,6 +120,15 @@ public class Jogo extends JFrame implements KeyListener {
         // Renderiza o jogador e o cronômetro
         player.render(g, camera.getX(), camera.getY());
         cronometro.render(g);
+
+        // Renderiza o Creeper (se estiver vivo)
+        if (creeper.estaVivo()) { 
+            creeper.render(g, camera.getX(), camera.getY());
+        }
+
+        if (slimeteste.estaVivo()) {
+            slimeteste.render(g, camera.getX(), camera.getY());
+        }
     
         g.dispose();
         bs.show();

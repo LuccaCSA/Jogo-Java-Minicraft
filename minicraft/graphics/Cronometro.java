@@ -101,40 +101,48 @@ public class Cronometro {
         return (float) (gameTime % dayDuration) / dayDuration;
     }
 
-    public String spawnMonstro;
+
 
     public Color getSkyColor(long gameTime) {
         float phase = getDayPhase(gameTime);
         float r, g, b, alpha;
-
-
-        if (phase < 0.25f) { // Amanhecer (Escuro -> Claro)
-            alpha = 0.7f * (1.0f - (phase / 0.25f));
-            r = 0.0f;
-            g = 0.0f;
-            b = 0.2f;
+    
+        // Novo esquema de fases:
+        // Manhã: 0% - 20%  (mais curta)
+        // Meio-dia: 20% - 45% 
+        // Tarde: 45% - 75% (começa mais cedo)
+        // Noite: 75% - 100%
+    
+        if (phase < 0.20f) { 
+            // Amanhecer rápido
+            alpha = 0.25f * (phase / 0.20f); 
+            r = 0.95f;
+            g = 0.95f;
+            b = 0.95f;
         } 
-        else if (phase < 0.5f) { // Meio-dia (Claro -> Sem efeito)
-            alpha = 1.0f - ((phase - 0.25f) / 0.25f);
+        else if (phase < 0.45f) { 
+            // Meio-dia prolongado
+            alpha = 0.0f;
             r = 1.0f;
             g = 1.0f;
             b = 1.0f;
         }
-        else if (phase < 0.75f) { // Entardecer (Sem efeito -> Laranja)
-            alpha = 0.6f * ((phase - 0.5f) / 0.25f);
+        else if (phase < 0.75f) { 
+            // Entardecer antecipado
+            alpha = 0.6f * ((phase - 0.45f) / 0.30f); 
             r = 1.0f;
-            g = 0.5f;
+            g = 0.6f;
+            b = 0.4f;
+        }
+        else { 
+            // Noite mais longa
+            alpha = 0.8f * ((phase - 0.68f) / 0.25f);
+            r = 0.15f;
+            g = 0.1f;
             b = 0.3f;
         }
-        else { // Noite (Laranja -> Escuro)
-            alpha = 0.8f * ((phase - 0.75f) / 0.25f);
-            r = 0.2f;
-            g = 0.1f;
-            b = 0.4f;
-            spawnMonstro = "sim";
-        }
-
-        return new Color(r, g, b, alpha); 
+    
+        return new Color(r, g, b, alpha);
     }
 
 }

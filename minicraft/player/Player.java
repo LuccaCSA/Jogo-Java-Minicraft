@@ -12,14 +12,17 @@ import minicraft.graphics.SpriteSheet;
 
 public class Player {
     private int x, y, speed = 4, frame;
+    private int vida = 100; // Vida inicial do jogador
     private boolean up, down, left, right, facingRight = true;
     private String state = "PARADO";
     private SpriteSheet spriteSheet;
     private HashMap<String, BufferedImage[]> animations;
     private Timer idleTimer;
+    private final int larguraHitbox = 18;
+    private final int alturaHitbox = 18;
 
     // Controle da animação de movimento
-    private int animationSpeed = 5; // Ajuste este valor para mudar a velocidade (quanto maior, mais lento)
+    private int animationSpeed = 5;
     private int animationCounter = 0;
 
     public Player(int x, int y) {
@@ -30,9 +33,28 @@ public class Player {
         this.animations = new HashMap<>();
         
         loadAnimations();
-        startIdleAnimation(); // Inicia o Timer para a animação idle
+        startIdleAnimation();
     }
 
+    // Método para receber dano
+    public void tomarDano(int dano) {
+        vida -= dano;
+        if(vida < 0) vida = 0;
+        
+        System.out.println("Jogador tomou " + dano + " de dano! Vida restante: " + vida);
+    }
+
+    // Método para verificar se está vivo
+    public boolean estaVivo() {
+        return vida > 0;
+    }
+
+    // Método para obter vida atual
+    public int getVida() {
+        return vida;
+    }
+
+    // Restante da classe mantido igual
     private void loadAnimations() {
         animations.put("PARADO", new BufferedImage[]{
             spriteSheet.getSprite(0, 0),
@@ -54,12 +76,11 @@ public class Player {
             public void run() {
                 if (state.equals("PARADO")) {
                     javax.swing.SwingUtilities.invokeLater(() -> {
-                        // Avança o frame e reinicia ao chegar no final
                         frame = (frame + 1) % animations.get("PARADO").length;
                     });
                 }
             }
-        }, 500, 500); // Intervalo de 500ms (0.5 segundos)
+        }, 500, 500);
     }
 
     public void update() {
@@ -92,7 +113,6 @@ public class Player {
             state = "PARADO";
         }
     
-        // Atualiza animação de movimento
         if (state.equals("ANDANDO")) {
             animationCounter++;
             if (animationCounter >= animationSpeed) {
@@ -103,7 +123,6 @@ public class Player {
     }
 
     public void render(Graphics g, int cameraX, int cameraY) {
-        // Garante que o frame não ultrapasse o tamanho do array
         int maxFrame = animations.get(state).length - 1;
         if (frame > maxFrame) {
             frame = maxFrame;
@@ -117,7 +136,6 @@ public class Player {
         
         g.drawImage(sprite, x - cameraX, y - cameraY, 48, 48, null);
     }
-
 
     private BufferedImage flipImage(BufferedImage image) {
         int w = image.getWidth();
@@ -142,5 +160,13 @@ public class Player {
 
     public int getY() {
         return y;
+    }
+
+    public int getLarguraHitbox() {
+        return larguraHitbox;
+    }
+
+    public int getAlturaHitbox() {
+        return alturaHitbox;
     }
 }
