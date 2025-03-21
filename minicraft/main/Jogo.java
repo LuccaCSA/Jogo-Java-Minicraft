@@ -5,6 +5,7 @@ import minicraft.graphics.Camera;
 import minicraft.graphics.Cronometro;
 import minicraft.inimigos.Creeper;
 import minicraft.inimigos.Slime;
+import minicraft.inimigos.Zumbi;
 import minicraft.player.Player;
 import minicraft.world.Mapa;
 
@@ -22,6 +23,7 @@ public class Jogo extends JFrame implements KeyListener {
     private Cronometro cronometro;
     private Creeper creeper;
     private Slime slimeteste;
+    private Zumbi zumbiteste;
 
     public Jogo() {
         // Configurações da janela
@@ -52,6 +54,7 @@ public class Jogo extends JFrame implements KeyListener {
         cronometro = new Cronometro();
         creeper = new Creeper(300, 300);
         slimeteste = new Slime(300, 300);
+        zumbiteste = new Zumbi(600, 300);
 
         startGame();
     }
@@ -95,6 +98,10 @@ public class Jogo extends JFrame implements KeyListener {
             slimeteste.update(player);
         }
 
+        if (zumbiteste.estaVivo()) {
+            zumbiteste.update(player);
+        }
+
     }
 
     // Método para renderizar o jogo
@@ -128,6 +135,10 @@ public class Jogo extends JFrame implements KeyListener {
 
         if (slimeteste.estaVivo()) {
             slimeteste.render(g, camera.getX(), camera.getY());
+        }
+
+        if (zumbiteste.estaVivo()) {
+            zumbiteste.render(g, camera.getX(), camera.getY());
         }
     
         g.dispose();

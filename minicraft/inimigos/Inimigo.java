@@ -9,7 +9,7 @@ public abstract class Inimigo {
     protected int velocidade;
     protected int raioDetecao;
     protected boolean vivo;
-    protected final int distanciaMinima = 15; // Nova constante
+    protected final int distanciaMinima = 20; // Nova constante
     protected int larguraHitbox = 18; // Valores padrão
     protected int alturaHitbox = 18;
 
@@ -25,10 +25,10 @@ public abstract class Inimigo {
     public void update(Player player) {
         if(!vivo) return;
         
-        double distancia = calcularDistancia(player.getX(), player.getY());
+        double distancia = calcularDistancia(player.getCentroX(), player.getCentroY());
         
         if(distancia <= raioDetecao) {
-            moverEmDirecao(player.getX(), player.getY());
+            moverEmDirecao(player.getCentroX(), player.getCentroY());
         }
     }
 
@@ -69,11 +69,22 @@ public abstract class Inimigo {
         return alturaHitbox;
     }
 
+    public int getHitboxX() {
+        return x + (larguraHitbox / 2);
+    }
+    
+    public int getHitboxY() {
+        return y + (alturaHitbox / 2);
+    }
+
     public boolean estaColidindoCom(Player player) {
-        return x < player.getX() + player.getLarguraHitbox() &&
-               x + larguraHitbox > player.getX() &&
-               y < player.getY() + player.getAlturaHitbox() &&
-               y + alturaHitbox > player.getY();
+        int centroX = x + (larguraHitbox / 2);
+        int centroY = y + (alturaHitbox / 2);
+        
+        return centroX < player.getX() + player.getLarguraHitbox() &&
+               centroX + larguraHitbox > player.getX() &&
+               centroY < player.getY() + player.getAlturaHitbox() &&
+               centroY + alturaHitbox > player.getY();
     }
 
     public int getX() { return x; }

@@ -134,7 +134,7 @@ public class Player {
             sprite = flipImage(sprite);
         }
         
-        g.drawImage(sprite, x - cameraX, y - cameraY, 48, 48, null);
+        g.drawImage(sprite, x - cameraX - 15, y - cameraY - 15, 48, 48, null);
     }
 
     private BufferedImage flipImage(BufferedImage image) {
@@ -168,5 +168,21 @@ public class Player {
 
     public int getAlturaHitbox() {
         return alturaHitbox;
+    }
+
+    public int getHitboxX() {
+        return x;
+    }
+    
+    public int getHitboxY() {
+        return y;
+    }
+
+    public int getCentroX() {
+        return x + (larguraHitbox / 2);
+    }
+    
+    public int getCentroY() {
+        return y + (alturaHitbox / 2);
     }
 }

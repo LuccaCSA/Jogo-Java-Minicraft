@@ -24,7 +24,7 @@ public class Creeper extends Inimigo {
     
     private float knockbackX, knockbackY;
     private final int danoExplosao = 20;
-    private final int distanciaExplosao = 20;
+    private final int distanciaExplosao = 35;
     private final int raioExplosao = 50;
     
     private int direcao = 1;
