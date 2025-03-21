@@ -3,58 +3,52 @@ package minicraft.player;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import minicraft.graphics.SpriteSheet;
+import minicraft.inimigos.Inimigo;
 
 public class Player {
     private int x, y, speed = 4, frame;
-    private int vida = 100; // Vida inicial do jogador
+    private int vida = 100;
     private boolean up, down, left, right, facingRight = true;
     private String state = "PARADO";
     private SpriteSheet spriteSheet;
     private HashMap<String, BufferedImage[]> animations;
     private Timer idleTimer;
-    private final int larguraHitbox = 18;
-    private final int alturaHitbox = 18;
+    private final int larguraHitbox = 48;
+    private final int alturaHitbox = 48;
 
-    // Controle da animação de movimento
+    // Sistema de ataque
+    private boolean attacking = false;
+    private int attackFrame = 0;
+    private long lastAttackTime = 0;
+    private final int attackDamage = 15;
+    private final int attackWidth = 70;    // Ajustável: largura da área de impacto
+    private final int attackHeight = 100;  // Ajustável: altura da área de impacto
+    private final int attackRange = -20;   // Ajustável: distância adicional à frente do jogador
+    private ArrayList<AttackParticle> attackParticles = new ArrayList<>();
+
+    // Controle de animação
     private int animationSpeed = 5;
     private int animationCounter = 0;
 
     public Player(int x, int y) {
         this.x = x;
         this.y = y;
-        
+
         this.spriteSheet = new SpriteSheet("minicraft/graphics/sprites/steve_sprites1.png", 18, 18);
         this.animations = new HashMap<>();
-        
+
         loadAnimations();
         startIdleAnimation();
     }
 
-    // Método para receber dano
-    public void tomarDano(int dano) {
-        vida -= dano;
-        if(vida < 0) vida = 0;
-        
-        System.out.println("Jogador tomou " + dano + " de dano! Vida restante: " + vida);
-    }
-
-    // Método para verificar se está vivo
-    public boolean estaVivo() {
-        return vida > 0;
-    }
-
-    // Método para obter vida atual
-    public int getVida() {
-        return vida;
-    }
-
-    // Restante da classe mantido igual
     private void loadAnimations() {
         animations.put("PARADO", new BufferedImage[]{
             spriteSheet.getSprite(0, 0),
@@ -67,25 +61,54 @@ public class Player {
             spriteSheet.getSprite(36, 18),
             spriteSheet.getSprite(54, 18),
         });
+
+        animations.put("ATACANDO", new BufferedImage[]{
+            spriteSheet.getSprite(0, 54),
+            spriteSheet.getSprite(18, 54),
+            spriteSheet.getSprite(36, 54),
+            spriteSheet.getSprite(54, 54),
+            spriteSheet.getSprite(72, 54),
+            spriteSheet.getSprite(90, 54),
+            spriteSheet.getSprite(108, 54),
+            spriteSheet.getSprite(126, 54)
+        });
     }
 
-    private void startIdleAnimation() {
-        idleTimer = new Timer();
-        idleTimer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                if (state.equals("PARADO")) {
-                    javax.swing.SwingUtilities.invokeLater(() -> {
-                        frame = (frame + 1) % animations.get("PARADO").length;
-                    });
-                }
-            }
-        }, 500, 500);
+    public void handleMousePress(MouseEvent e) {
+        if (e.getButton() == MouseEvent.BUTTON1 && !attacking) {
+            startAttack();
+        }
     }
 
-    public void update() {
+    private void startAttack() {
+        state = "ATACANDO";
+        attacking = true;
+        attackFrame = 0;
+        lastAttackTime = System.currentTimeMillis();
+        createAttackParticles();
+    }
+
+    private void createAttackParticles() {
+        int particleX = facingRight ? x + larguraHitbox + attackRange : x - attackWidth - attackRange;
+        int particleY = y + (alturaHitbox / 2) - (attackHeight / 2);
+
+        for (int i = 0; i < 3; i++) {
+            attackParticles.add(new AttackParticle(
+                particleX + (facingRight ? i * 20 : -i * 20),
+                particleY + (int)(Math.random() * attackHeight),
+                facingRight
+            ));
+        }
+    }
+
+    public void update(ArrayList<Inimigo> inimigos) {
+        if (attacking) {
+            updateAttack(inimigos);
+            return;
+        }
+
         boolean moving = false;
-    
+
         if (left) {
             x -= speed;
             facingRight = false;
@@ -108,11 +131,11 @@ public class Player {
             state = "ANDANDO";
             moving = true;
         }
-    
+
         if (!moving) {
             state = "PARADO";
         }
-    
+
         if (state.equals("ANDANDO")) {
             animationCounter++;
             if (animationCounter >= animationSpeed) {
@@ -122,19 +145,71 @@ public class Player {
         }
     }
 
-    public void render(Graphics g, int cameraX, int cameraY) {
-        int maxFrame = animations.get(state).length - 1;
-        if (frame > maxFrame) {
-            frame = maxFrame;
+    private void updateAttack(ArrayList<Inimigo> inimigos) {
+        long currentTime = System.currentTimeMillis();
+        attackFrame = (int)((currentTime - lastAttackTime) / 62); // 62ms por frame (aproximado para 500ms no total)
+
+        if (attackFrame >= animations.get("ATACANDO").length) {
+            attacking = false;
+            state = "PARADO";
+            attackParticles.clear();
+        } else {
+            // Verifica colisão com inimigos
+            java.awt.Rectangle attackArea = getAttackArea();
+            if (attackArea != null) {
+                for (Inimigo inimigo : inimigos) {
+                    if (inimigo.estaVivo() && attackArea.intersects(
+                            inimigo.getHitboxX(), 
+                            inimigo.getHitboxY(), 
+                            inimigo.getLarguraHitbox(), 
+                            inimigo.getAlturaHitbox())) {
+                        inimigo.tomarDano(attackDamage); // Aplica o dano ao inimigo
+                    }
+                }
+            }
         }
-    
-        BufferedImage sprite = animations.get(state)[frame];
-        
+
+        for (int i = attackParticles.size() - 1; i >= 0; i--) {
+            if (!attackParticles.get(i).update()) {
+                attackParticles.remove(i);
+            }
+        }
+    }
+
+    public void render(Graphics g, int cameraX, int cameraY) {
+        BufferedImage sprite;
+        if (attacking) {
+            sprite = animations.get("ATACANDO")[attackFrame % animations.get("ATACANDO").length];
+        } else {
+            int maxFrame = animations.get(state).length - 1;
+            if (frame > maxFrame) frame = maxFrame;
+            sprite = animations.get(state)[frame];
+        }
+
         if (!facingRight) {
             sprite = flipImage(sprite);
         }
-        
-        g.drawImage(sprite, x - cameraX - 15, y - cameraY - 15, 48, 48, null);
+
+        int spriteWidth = 48;
+        int spriteHeight = 48;
+        int offsetX = (larguraHitbox - spriteWidth) / 2;
+        int offsetY = (alturaHitbox - spriteHeight) / 2;
+
+        g.drawImage(sprite, 
+            x - cameraX + offsetX, 
+            y - cameraY + offsetY, 
+            spriteWidth, spriteHeight, null);
+
+        for (AttackParticle particle : attackParticles) {
+            particle.render(g, cameraX, cameraY);
+        }
+
+        // Desenhar a área de ataque para depuração
+        java.awt.Rectangle attackArea = getAttackArea();
+        if (attackArea != null) {
+            g.setColor(java.awt.Color.RED);
+            g.drawRect(attackArea.x - cameraX, attackArea.y - cameraY, attackArea.width, attackArea.height);
+        }
     }
 
     private BufferedImage flipImage(BufferedImage image) {
@@ -147,6 +222,68 @@ public class Player {
         return flipped;
     }
 
+    public java.awt.Rectangle getAttackArea() {
+        if (!attacking || attackFrame < 2 || attackFrame > 5) return null;
+
+        int attackX = facingRight ? x + larguraHitbox + attackRange : x - attackWidth - attackRange;
+        int attackY = y + (alturaHitbox / 2) - (attackHeight / 2);
+
+        return new java.awt.Rectangle(attackX, attackY, attackWidth, attackHeight);
+    }
+
+    private class AttackParticle {
+        int x, y;
+        int life = 10;
+        boolean facingRight;
+        BufferedImage sprite;
+
+        AttackParticle(int x, int y, boolean facingRight) {
+            this.x = x;
+            this.y = y;
+            this.facingRight = facingRight;
+            this.sprite = spriteSheet.getSprite(144, 36);
+        }
+
+        boolean update() {
+            life--;
+            x += facingRight ? 3 : -3;
+            return life > 0;
+        }
+
+        void render(Graphics g, int cameraX, int cameraY) {
+            BufferedImage toDraw = facingRight ? sprite : flipImage(sprite);
+            g.drawImage(toDraw, x - cameraX - 8, y - cameraY - 8, 16, 16, null);
+        }
+    }
+
+    public void tomarDano(int dano) {
+        vida -= dano;
+        if (vida < 0) vida = 0;
+        System.out.println("Jogador tomou " + dano + " de dano! Vida restante: " + vida);
+    }
+
+    public boolean estaVivo() {
+        return vida > 0;
+    }
+
+    public int getVida() {
+        return vida;
+    }
+
+    private void startIdleAnimation() {
+        idleTimer = new Timer();
+        idleTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                if (state.equals("PARADO")) {
+                    javax.swing.SwingUtilities.invokeLater(() -> {
+                        frame = (frame + 1) % animations.get("PARADO").length;
+                    });
+                }
+            }
+        }, 500, 500);
+    }
+
     public void handleKeyPress(int keyCode, boolean pressed) {
         if (keyCode == KeyEvent.VK_W) up = pressed;
         if (keyCode == KeyEvent.VK_S) down = pressed;
@@ -154,35 +291,12 @@ public class Player {
         if (keyCode == KeyEvent.VK_D) right = pressed;
     }
 
-    public int getX() {
-        return x;
-    }
-
-    public int getY() {
-        return y;
-    }
-
-    public int getLarguraHitbox() {
-        return larguraHitbox;
-    }
-
-    public int getAlturaHitbox() {
-        return alturaHitbox;
-    }
-
-    public int getHitboxX() {
-        return x;
-    }
-    
-    public int getHitboxY() {
-        return y;
-    }
-
-    public int getCentroX() {
-        return x + (larguraHitbox / 2);
-    }
-    
-    public int getCentroY() {
-        return y + (alturaHitbox / 2);
-    }
+    public int getX() { return x; }
+    public int getY() { return y; }
+    public int getLarguraHitbox() { return larguraHitbox; }
+    public int getAlturaHitbox() { return alturaHitbox; }
+    public int getHitboxX() { return x; }
+    public int getHitboxY() { return y; }
+    public int getCentroX() { return x + (larguraHitbox / 2); }
+    public int getCentroY() { return y + (alturaHitbox / 2); }
 }

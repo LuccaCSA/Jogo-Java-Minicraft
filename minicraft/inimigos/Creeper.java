@@ -31,7 +31,7 @@ public class Creeper extends Inimigo {
     private int explosaoX, explosaoY;
 
     public Creeper(int x, int y) {
-        super(x, y, 50, 3);
+        super(x, y, 30, 3);
         this.estadoAtual = Estado.PARADO;
         this.estadoAnterior = Estado.PARADO;
         this.tempoAnimacao = 0;

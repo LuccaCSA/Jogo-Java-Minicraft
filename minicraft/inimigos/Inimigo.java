@@ -9,8 +9,8 @@ public abstract class Inimigo {
     protected int velocidade;
     protected int raioDetecao;
     protected boolean vivo;
-    protected final int distanciaMinima = 20; // Nova constante
-    protected int larguraHitbox = 18; // Valores padrão
+    protected final int distanciaMinima = 20;
+    protected int larguraHitbox = 18;
     protected int alturaHitbox = 18;
 
     public Inimigo(int x, int y, int vida, int velocidade) {
@@ -23,11 +23,11 @@ public abstract class Inimigo {
     }
 
     public void update(Player player) {
-        if(!vivo) return;
+        if (!vivo) return;
         
         double distancia = calcularDistancia(player.getCentroX(), player.getCentroY());
         
-        if(distancia <= raioDetecao) {
+        if (distancia <= raioDetecao) {
             moverEmDirecao(player.getCentroX(), player.getCentroY());
         }
     }
@@ -36,7 +36,7 @@ public abstract class Inimigo {
 
     public void tomarDano(int dano) {
         vida -= dano;
-        if(vida <= 0) {
+        if (vida <= 0) {
             vivo = false;
         }
     }
@@ -50,7 +50,7 @@ public abstract class Inimigo {
         double dy = targetY - y;
         double distancia = Math.sqrt(dx * dx + dy * dy);
         
-        if(distancia <= distanciaMinima) return;
+        if (distancia <= distanciaMinima) return;
         
         double step = Math.min(velocidade, distancia - distanciaMinima);
         double dirX = dx / distancia;
@@ -60,7 +60,6 @@ public abstract class Inimigo {
         y += (int)(dirY * step);
     }
 
-    // Getters para a hitbox
     public int getLarguraHitbox() {
         return larguraHitbox;
     }
