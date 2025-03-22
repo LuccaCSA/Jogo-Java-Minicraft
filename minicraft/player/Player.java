@@ -29,9 +29,9 @@ public class Player {
     private int attackFrame = 0;
     private long lastAttackTime = 0;
     private final int attackDamage = 15;
-    private final int attackWidth = 70;    // Ajustável: largura da área de impacto
-    private final int attackHeight = 100;  // Ajustável: altura da área de impacto
-    private final int attackRange = -20;   // Ajustável: distância adicional à frente do jogador
+    private final int attackWidth = 70;
+    private final int attackHeight = 100;
+    private final int attackRange = -20;
     private ArrayList<AttackParticle> attackParticles = new ArrayList<>();
 
     // Controle de animação
@@ -147,23 +147,22 @@ public class Player {
 
     private void updateAttack(ArrayList<Inimigo> inimigos) {
         long currentTime = System.currentTimeMillis();
-        attackFrame = (int)((currentTime - lastAttackTime) / 62); // 62ms por frame (aproximado para 500ms no total)
+        attackFrame = (int)((currentTime - lastAttackTime) / 62);
 
         if (attackFrame >= animations.get("ATACANDO").length) {
             attacking = false;
             state = "PARADO";
             attackParticles.clear();
         } else {
-            // Verifica colisão com inimigos
             java.awt.Rectangle attackArea = getAttackArea();
             if (attackArea != null) {
                 for (Inimigo inimigo : inimigos) {
                     if (inimigo.estaVivo() && attackArea.intersects(
-                            inimigo.getHitboxX(), 
-                            inimigo.getHitboxY(), 
-                            inimigo.getLarguraHitbox(), 
+                            inimigo.getHitboxX() - inimigo.getLarguraHitbox() / 2,
+                            inimigo.getHitboxY() - inimigo.getAlturaHitbox() / 2,
+                            inimigo.getLarguraHitbox(),
                             inimigo.getAlturaHitbox())) {
-                        inimigo.tomarDano(attackDamage); // Aplica o dano ao inimigo
+                        inimigo.tomarDano(attackDamage);
                     }
                 }
             }
@@ -195,16 +194,15 @@ public class Player {
         int offsetX = (larguraHitbox - spriteWidth) / 2;
         int offsetY = (alturaHitbox - spriteHeight) / 2;
 
-        g.drawImage(sprite, 
-            x - cameraX + offsetX, 
-            y - cameraY + offsetY, 
+        g.drawImage(sprite,
+            x - cameraX + offsetX,
+            y - cameraY + offsetY,
             spriteWidth, spriteHeight, null);
 
         for (AttackParticle particle : attackParticles) {
             particle.render(g, cameraX, cameraY);
         }
 
-        // Desenhar a área de ataque para depuração
         java.awt.Rectangle attackArea = getAttackArea();
         if (attackArea != null) {
             g.setColor(java.awt.Color.RED);

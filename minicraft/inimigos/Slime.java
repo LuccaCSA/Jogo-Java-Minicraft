@@ -26,11 +26,10 @@ public class Slime extends Inimigo {
     private float alturaPulo;
     private float velocidadeHorizontal;
     private int direcaoPulo;
-    private float initialY; // Nova variável para guardar a posição inicial do pulo
-
+    private float initialY;
 
     public Slime(int x, int y) {
-        super(x - (18 * 3), y - (18 * 3), 30, 0); // Centraliza o spawn nas coordenadas originais
+        super(x - (18 * 3), y - (18 * 3), 30, 0);
         this.larguraHitbox = 18 * 6;
         this.alturaHitbox = 18 * 6;
         this.estadoAtual = Estado.PARADO;
@@ -83,17 +82,14 @@ public class Slime extends Inimigo {
 
     @Override
     public boolean estaColidindoCom(Player player) {
-        // Hitbox do Slime (baseada no centro)
         int slimeCenterX = x + (larguraHitbox / 2);
         int slimeCenterY = y + (alturaHitbox / 2);
-        int slimeRadius = 54; // 108/2
+        int slimeRadius = 54;
         
-        // Hitbox do Player (ajuste conforme seu código)
         int playerCenterX = player.getX() + (player.getLarguraHitbox() / 2);
         int playerCenterY = player.getY() + (player.getAlturaHitbox() / 2);
         int playerRadius = player.getLarguraHitbox() / 2;
         
-        // Distância entre os centros
         double distancia = Math.sqrt(Math.pow(slimeCenterX - playerCenterX, 2) + 
                         Math.pow(slimeCenterY - playerCenterY, 2));
         
@@ -109,6 +105,22 @@ public class Slime extends Inimigo {
         tempoAnimacao += deltaTime;
         tempoDanoContinuo += deltaTime;
 
+        // Aplicar knockback e limitar posição
+        if (knockbackX != 0 || knockbackY != 0) {
+            x += knockbackX * deltaTime * 40;
+            y += knockbackY * deltaTime * 40;
+            knockbackX *= 0.9f;
+            knockbackY *= 0.9f;
+            if (Math.abs(knockbackX) < 0.1f && Math.abs(knockbackY) < 0.1f) {
+                knockbackX = 0;
+                knockbackY = 0;
+            }
+            // Limitar posição dentro da área do jogo
+            x = Math.max(0, Math.min(x, 1200 - larguraHitbox));
+            y = Math.max(0, Math.min(y, 1000 - alturaHitbox));
+            System.out.println("Slime knockback at x=" + x + ", y=" + y);
+        }
+
         if (estadoAtual == Estado.DANO) {
             atualizarDano(deltaTime);
         } else {
@@ -118,6 +130,10 @@ public class Slime extends Inimigo {
         atualizarPulo();
         atualizarAnimacao();
         aplicarDanoContinuo(player);
+
+        // Limitar posição após pulo ou movimento
+        x = Math.max(0, Math.min(x, 1200 - larguraHitbox));
+        y = Math.max(0, Math.min(y, 1000 - alturaHitbox));
     }
 
     private void comportamentoNormal(Player player, float deltaTime) {
@@ -140,14 +156,14 @@ public class Slime extends Inimigo {
         tempoEstado = 0;
         frame = 0;
         noAr = true;
-        initialY = y; // Guarda a posição Y inicial antes do pulo
-        alturaPulo = -15f; // Valor negativo para impulso para cima
+        initialY = y;
+        alturaPulo = -15f;
         
         double dx = player.getX() - x;
         double dy = player.getY() - y;
         double distancia = Math.sqrt(dx * dx + dy * dy);
         
-        if(distancia > 0) {
+        if (distancia > 0) {
             direcaoPulo = (int) Math.signum(dx);
             velocidadeHorizontal = (float) (dx / distancia) * distanciaPulo * 0.0167f;
         }
@@ -158,7 +174,6 @@ public class Slime extends Inimigo {
             alturaPulo += 0.8f;
             y += alturaPulo;
             
-            // Verifica se a BASE da hitbox tocou o chão
             if (y + alturaHitbox >= initialY + alturaHitbox) {
                 y = (int) initialY;
                 alturaPulo = 0;
@@ -172,21 +187,12 @@ public class Slime extends Inimigo {
     }
 
     private void atualizarDano(float deltaTime) {
-        x += knockbackX * deltaTime * 40;
-        y += knockbackY * deltaTime * 40;
-        
-        knockbackX *= 0.9f;
-        knockbackY *= 0.9f;
-
-        if (tempoAnimacao >= duracaoFrames.get(Estado.DANO)) {
-            frame = (frame + 1) % animacoes.get(Estado.DANO).length;
-            tempoAnimacao = 0;
-            
-            if (frame == animacoes.get(Estado.DANO).length - 1) {
-                estadoAtual = Estado.PARADO;
-                tempoEstado = 0;
-            }
+        if (tempoEstado >= 0.5f) { // Dura 0.5 segundos no estado DANO
+            estadoAtual = Estado.PARADO;
+            tempoEstado = 0;
+            frame = 0;
         }
+        atualizarAnimacao();
     }
 
     private void atualizarAnimacao() {
@@ -210,10 +216,12 @@ public class Slime extends Inimigo {
             estadoAtual = Estado.DANO;
             frame = 0;
             tempoAnimacao = 0;
+            tempoEstado = 0;
             
             double angulo = Math.atan2(y - getY(), x - getX());
             knockbackX = (float) Math.cos(angulo) * 2;
             knockbackY = (float) Math.sin(angulo) * 2;
+            System.out.println("Slime took damage, knockback applied: x=" + x + ", y=" + y);
         }
     }
 
@@ -226,7 +234,6 @@ public class Slime extends Inimigo {
         
         BufferedImage frameAtual = frames[frame % frames.length];
         
-        // Alinhamento perfeito hitbox/sprite (sem offsets)
         int renderX = x - cameraX;
         int renderY = y - cameraY;
         

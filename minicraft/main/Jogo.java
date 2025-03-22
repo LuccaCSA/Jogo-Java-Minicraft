@@ -30,63 +30,54 @@ public class Jogo extends JFrame implements KeyListener {
     private Zumbi zumbiteste;
     private ArrayList<Inimigo> inimigos;
 
-
     public Jogo() {
-        // Configurações da janela
         setTitle("Minicraft");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(false);
 
-        // Configura o Canvas
         canvas = new Canvas();
         canvas.setPreferredSize(new Dimension(1200, 1000));
         canvas.setFocusable(false);
         add(canvas);
 
-        // Centraliza a janela na tela
         pack();
         setLocationRelativeTo(null);
 
-        // Adiciona o KeyListener para eventos de teclado
         addKeyListener(this);
 
-        // Adiciona o MouseListener para eventos de mouse
         canvas.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                if (e.getButton() == MouseEvent.BUTTON1) { // Botão esquerdo (M1)
-                    player.handleMousePress(e); // Chama o método de ataque do Player
-                } else if (e.getButton() == MouseEvent.BUTTON3) { // Botão direito (M3)
+                if (e.getButton() == MouseEvent.BUTTON1) {
+                    player.handleMousePress(e);
+                } else if (e.getButton() == MouseEvent.BUTTON3) {
                     System.out.println("Botão direito clicado na posição: " + e.getX() + ", " + e.getY());
-                    // Adicione aqui a lógica para o botão direito, se desejar
                 }
             }
         });
 
-        // Torna a janela visível
         setVisible(true);
 
-        // Inicializa o jogador, o mapa e a câmera
         player = new Player(600, 500);
         mapa = new Mapa();
         camera = new Camera(600, 500);
         cronometro = new Cronometro();
         creeper = new Creeper(300, 300);
-        slimeteste = new Slime(300, 300);
+        slimeteste = new Slime(400, 400);
         zumbiteste = new Zumbi(600, 300);
         inimigos = new ArrayList<>();
+        inimigos.add(creeper);
+        inimigos.add(slimeteste);
         inimigos.add(zumbiteste);
 
         startGame();
     }
 
-    // Método para iniciar o jogo
     private void startGame() {
         running = true;
         gameLoop();
     }
 
-    // Loop principal do jogo
     private void gameLoop() {
         long gameStartTime = System.currentTimeMillis();
 
@@ -105,64 +96,51 @@ public class Jogo extends JFrame implements KeyListener {
         }
     }
 
-    // Método para atualizar a lógica do jogo
     private void updateGame(long gameTime) {
         player.update(inimigos);
         camera.update(player, mapa.getLargura(), mapa.getAltura(), canvas.getWidth(), canvas.getHeight());
 
-        if (creeper.estaVivo()) {
-            creeper.update(player);
-        }
-
-        if (slimeteste.estaVivo()) {
-            slimeteste.update(player);
-        }
-
-        if (zumbiteste.estaVivo()) {
-            zumbiteste.update(player);
-        }
-    }
-
-    // Método para renderizar o jogo
-    private void render(long gameTime) {
-        BufferStrategy bs = canvas.getBufferStrategy();
-        if (bs == null) {
-            canvas.createBufferStrategy(3);
-            return;
-        }
-
-        Graphics g = bs.getDrawGraphics();
-
-        g.setColor(Color.BLACK);
-        g.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
-
-        Color skyColor = cronometro.getSkyColor(gameTime);
-        mapa.render(g, camera.getX(), camera.getY(), skyColor);
-
-        player.render(g, camera.getX(), camera.getY());
-        cronometro.render(g);
-
-        if (creeper.estaVivo()) {
-            creeper.render(g, camera.getX(), camera.getY());
-        }
-
-        if (slimeteste.estaVivo()) {
-            slimeteste.render(g, camera.getX(), camera.getY());
-        }
-
-        if (zumbiteste.estaVivo()) {
-            zumbiteste.render(g, camera.getX(), camera.getY());
-        }
-
         for (Inimigo inimigo : inimigos) {
-            inimigo.render(g, 0, 0);
+            if (inimigo.estaVivo()) {
+                inimigo.update(player);
+                System.out.println("Updating " + inimigo.getClass().getSimpleName() + " at x=" + inimigo.getX() + ", y=" + inimigo.getY() + ", vivo=" + inimigo.estaVivo());
+            }
         }
-
-        g.dispose();
-        bs.show();
     }
 
-    // Métodos do KeyListener
+    private void render(long gameTime) {
+        SwingUtilities.invokeLater(() -> {
+            BufferStrategy bs = canvas.getBufferStrategy();
+            if (bs == null) {
+                canvas.createBufferStrategy(3);
+                return;
+            }
+
+            Graphics g = bs.getDrawGraphics();
+
+            g.setColor(Color.BLACK);
+            g.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
+
+            Color skyColor = cronometro.getSkyColor(gameTime);
+            mapa.render(g, camera.getX(), camera.getY(), skyColor);
+
+            player.render(g, camera.getX(), camera.getY());
+            cronometro.render(g);
+
+            for (Inimigo inimigo : inimigos) {
+                if (inimigo.estaVivo()) {
+                    inimigo.render(g, camera.getX(), camera.getY());
+                    System.out.println("Rendering " + inimigo.getClass().getSimpleName() + " at x=" + inimigo.getX() + ", y=" + inimigo.getY());
+                } else {
+                    System.out.println("Skipping render of " + inimigo.getClass().getSimpleName() + " (not alive)");
+                }
+            }
+
+            g.dispose();
+            bs.show();
+        });
+    }
+
     @Override
     public void keyPressed(KeyEvent e) {
         int keyCode = e.getKeyCode();
@@ -177,10 +155,8 @@ public class Jogo extends JFrame implements KeyListener {
 
     @Override
     public void keyTyped(KeyEvent e) {
-        // Não usado no momento
     }
 
-    // Método principal
     public static void main(String[] args) {
         new Jogo();
     }
