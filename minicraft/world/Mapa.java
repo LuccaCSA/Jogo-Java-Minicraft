@@ -13,7 +13,7 @@ public class Mapa {
 
     public Mapa() {
         try {
-            mapaImage = ImageIO.read(new File("minicraft/graphics/sprites/mapa.png"));
+            mapaImage = ImageIO.read(new File("minicraft/graphics/sprites/mapatotal.png"));
             if (mapaImage == null) {
                 System.out.println("Erro: a imagem do mapa não foi carregada!");
             } else {
